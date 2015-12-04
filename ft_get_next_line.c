@@ -6,7 +6,7 @@
 /*   By: snicolet <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2015/12/04 10:11:09 by snicolet          #+#    #+#             */
-/*   Updated: 2015/12/04 16:08:29 by snicolet         ###   ########.fr       */
+/*   Updated: 2015/12/04 19:09:31 by snicolet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,71 +36,65 @@ static size_t	ft_bpos(const char *s)
 	return (0);
 }
 
-void	*ft_memcpy(void *dest, const void *src, size_t size)
+static void		ft_strappend(char **s1, const char *s2)
 {
-	size_t				p;
-	unsigned char		*d;
-	const unsigned char	*s;
-
-	d = dest;
-	s = src;
-	p = 0;
-	while (p < size)
-	{
-		d[p] = s[p];
-		p++;
-	}
-	return (dest);
-}
-
-static char		*ft_strappend(char *s1, const char *s2)
-{
-	const size_t	size = ft_strlen(s1) + ft_strlen(s2);
+	size_t			size;
 	char			*d;
 	size_t			p;
 
-	if (!(d = (char*)malloc(sizeof(char) * (size + 1))))
-		return (NULL);
 	p = 0;
-	while ((p < size) && (*s2))
-		d[p++] = ((*s1) ? *(s1++) : *(s2++));
-	d[p] = '\0';
-	free(s1);
-	return (d);
-}
-
-static int		yolo(char *x, int y)
-{
-	free(x);
-	return (y);
+	size = ((*s1) ? ft_strlen(*s1) : 0) + ft_strlen(s2);
+	if ((d = (char*)malloc(sizeof(char) * (size + 1))))
+	{
+		while (p < size)
+			d[p++] = (((*s1) && (**s1)) ? *(*s1++) : *(s2++));
+		d[p] = '\0';
+		if (*s1)
+			free(*s1);
+		*s1 = d;
+	}
+	else
+		*s1 = 0;
 }
 
 int				ft_get_next_line(int const fd, char **line)
 {
 	int		ret;
 	size_t	p;
-	char	*buffer;
+	char	buffer[BUFF_SIZE];
 	size_t	bpos;
 	size_t	total;
 
 	*line = 0;
-	if (!(buffer = (char*)malloc(BUFF_SIZE)))
-		return (-1);
 	p = 0;
 	total = 0;
-	while (((ret = read(fd, buffer, BUFF_SIZE)) >= 0) && (total += ret))
+	while (((ret = read(fd, buffer, BUFF_SIZE -1)) >= 0) && (total += ret))
 	{
-		bpos = ft_bpos(buffer);
-		if (!ft_strappend(*line, buffer))
-			return (yolo(buffer, 1));
-		if ((bpos) || (!ret))
-			return (yolo(buffer, 1));
+		buffer[ret] = '\0';
+		bpos = ft_bpos((char*)buffer);
+		ft_strappend(line, (char*)buffer);
+		if (!*line)
+			return (-1);
+		if (!bpos)
+			return (1);
 	}
-	return (yolo(buffer, (ret < 0) ? -1 : 0));
+	return ((ret < 0) ? -1 : 0);
 }
 
+//DELETE EVRYTHING BELLOW THIS LINE (INCLUDED)
 #include <stdlib.h>
 #include <stdio.h>
+
+void			test_strappend()
+{
+	char	*x;
+
+	x = 0;
+	ft_strappend(&x, "abc");
+	ft_strappend(&x, "def");
+	printf("%s\n", x);
+	free(x);
+}
 
 int				main(int ac, char **av)
 {
@@ -108,6 +102,7 @@ int				main(int ac, char **av)
 	int		fd;
 	char	*buffer = malloc(81);
 
+	test_strappend();
 	if (ac > 1)
 	{
 		if ((fd = open(av[1], O_RDONLY)) <= 0)
