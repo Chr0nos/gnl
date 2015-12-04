@@ -6,7 +6,7 @@
 /*   By: snicolet <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2015/12/04 10:11:09 by snicolet          #+#    #+#             */
-/*   Updated: 2015/12/04 19:09:31 by snicolet         ###   ########.fr       */
+/*   Updated: 2015/12/04 20:14:39 by snicolet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,7 @@ static size_t	ft_bpos(const char *s)
 	return (0);
 }
 
-static void		ft_strappend(char **s1, const char *s2)
+static char		*ft_strappend(char **s1, const char *s2)
 {
 	size_t			size;
 	char			*d;
@@ -46,15 +46,15 @@ static void		ft_strappend(char **s1, const char *s2)
 	size = ((*s1) ? ft_strlen(*s1) : 0) + ft_strlen(s2);
 	if ((d = (char*)malloc(sizeof(char) * (size + 1))))
 	{
-		while (p < size)
-			d[p++] = (((*s1) && (**s1)) ? *(*s1++) : *(s2++));
-		d[p] = '\0';
+		while (p <= size + 1)
+			d[p++] = (((*s1) && (**s1 != '\0')) ? *(*s1++) : *(s2++));
 		if (*s1)
 			free(*s1);
 		*s1 = d;
 	}
 	else
 		*s1 = 0;
+	return (d);
 }
 
 int				ft_get_next_line(int const fd, char **line)
@@ -72,12 +72,16 @@ int				ft_get_next_line(int const fd, char **line)
 	{
 		buffer[ret] = '\0';
 		bpos = ft_bpos((char*)buffer);
+		if (bpos)
+			buffer[bpos] = '\0';
 		ft_strappend(line, (char*)buffer);
 		if (!*line)
 			return (-1);
 		if (!bpos)
 			return (1);
 	}
+	if (*line)
+		return (1);
 	return ((ret < 0) ? -1 : 0);
 }
 
@@ -100,8 +104,9 @@ int				main(int ac, char **av)
 {
 	int		ret;
 	int		fd;
-	char	*buffer = malloc(81);
+	char	*buffer;
 
+	buffer = 0;
 	test_strappend();
 	if (ac > 1)
 	{
