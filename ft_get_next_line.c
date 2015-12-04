@@ -6,7 +6,7 @@
 /*   By: snicolet <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2015/12/04 10:11:09 by snicolet          #+#    #+#             */
-/*   Updated: 2015/12/04 13:06:19 by snicolet         ###   ########.fr       */
+/*   Updated: 2015/12/04 14:52:55 by snicolet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,21 +26,27 @@ static size_t	ft_bpos(const char *s)
 	return (0);
 }
 
-static char		*ft_strncpy(char *dest, const char *src, unsigned int n)
+static char		*ft_strndup(const char *s, size_t n)
 {
-	unsigned int	p;
+	size_t	p;
+	char	*x;
 
+	if (!(x = malloc(sizeof(char) * (n + 1))))
+		return (NULL);
 	p = 0;
-	while ((src[p]) && (p < n))
+	while ((s[p]) && (p < n))
 	{
-		dest[p] = src[p];
+		x[p] = s[p];
 		p++;
 	}
-	while (p < n)
-		dest[p++] = '\0';
-	return (dest);
+	x[p] = '\0';
+	return (x);
 }
-
+static int		yolo(char *x, int y)
+{
+	free(x);
+	return (y);
+}
 int				ft_get_next_line(int const fd, char **line)
 {
 	int		ret;
@@ -53,19 +59,16 @@ int				ft_get_next_line(int const fd, char **line)
 		return (-1);
 	p = 0;
 	total = 0;
-	while ((ret = read(fd, buffer, BUFF_SIZE)) > 0)
+	while ((ret = read(fd, buffer, BUFF_SIZE)) >= 0)
 	{
 		total += ret;
 		bpos = ft_bpos(buffer);
-		ft_strncpy(line[p++], buffer, ((bpos) ? bpos : ret));
-		if (bpos)
-		{
-			free(buffer);
-			return (1);
-		}
+		if (!(*line = ft_strndup(buffer, (bpos) ? bpos : ret)))
+			return (yolo(buffer, 1));
+		if ((bpos) || (!ret))
+			return (yolo(buffer, 1));
 	}
-	free(buffer);
-	return ((ret < 0) ? -1 : 0);
+	return (yolo(buffer, (ret < 0) ? -1 : 0));
 }
 
 #include <stdlib.h>
@@ -73,6 +76,7 @@ int				ft_get_next_line(int const fd, char **line)
 
 int				main(int ac, char **av)
 {
+	int		ret;
 	int		fd;
 	char	*buffer = malloc(81);
 
@@ -81,7 +85,10 @@ int				main(int ac, char **av)
 		if (!(fd = open(av[1], O_RDONLY)))
 			printf("Failed to open file: GTFO NOOB\n");
 		else
+		{
+			ret = ft_get_next_line(fd, &buffer);
 			printf("%s\n",buffer);
+		}
 		free(buffer);
 		close(fd);
 	}
