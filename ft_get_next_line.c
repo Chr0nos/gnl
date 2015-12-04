@@ -6,7 +6,7 @@
 /*   By: snicolet <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2015/12/04 10:11:09 by snicolet          #+#    #+#             */
-/*   Updated: 2015/12/04 14:52:55 by snicolet         ###   ########.fr       */
+/*   Updated: 2015/12/04 16:08:29 by snicolet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,16 @@
 #include <unistd.h>
 #include <stdlib.h>
 #define BUFF_SIZE 32
+
+static size_t	ft_strlen(const char *s)
+{
+	size_t	len;
+
+	len = 0;
+	while (s[len])
+		len++;
+	return (len);
+}
 
 static size_t	ft_bpos(const char *s)
 {
@@ -26,27 +36,45 @@ static size_t	ft_bpos(const char *s)
 	return (0);
 }
 
-static char		*ft_strndup(const char *s, size_t n)
+void	*ft_memcpy(void *dest, const void *src, size_t size)
 {
-	size_t	p;
-	char	*x;
+	size_t				p;
+	unsigned char		*d;
+	const unsigned char	*s;
 
-	if (!(x = malloc(sizeof(char) * (n + 1))))
-		return (NULL);
+	d = dest;
+	s = src;
 	p = 0;
-	while ((s[p]) && (p < n))
+	while (p < size)
 	{
-		x[p] = s[p];
+		d[p] = s[p];
 		p++;
 	}
-	x[p] = '\0';
-	return (x);
+	return (dest);
 }
+
+static char		*ft_strappend(char *s1, const char *s2)
+{
+	const size_t	size = ft_strlen(s1) + ft_strlen(s2);
+	char			*d;
+	size_t			p;
+
+	if (!(d = (char*)malloc(sizeof(char) * (size + 1))))
+		return (NULL);
+	p = 0;
+	while ((p < size) && (*s2))
+		d[p++] = ((*s1) ? *(s1++) : *(s2++));
+	d[p] = '\0';
+	free(s1);
+	return (d);
+}
+
 static int		yolo(char *x, int y)
 {
 	free(x);
 	return (y);
 }
+
 int				ft_get_next_line(int const fd, char **line)
 {
 	int		ret;
@@ -55,15 +83,15 @@ int				ft_get_next_line(int const fd, char **line)
 	size_t	bpos;
 	size_t	total;
 
+	*line = 0;
 	if (!(buffer = (char*)malloc(BUFF_SIZE)))
 		return (-1);
 	p = 0;
 	total = 0;
-	while ((ret = read(fd, buffer, BUFF_SIZE)) >= 0)
+	while (((ret = read(fd, buffer, BUFF_SIZE)) >= 0) && (total += ret))
 	{
-		total += ret;
 		bpos = ft_bpos(buffer);
-		if (!(*line = ft_strndup(buffer, (bpos) ? bpos : ret)))
+		if (!ft_strappend(*line, buffer))
 			return (yolo(buffer, 1));
 		if ((bpos) || (!ret))
 			return (yolo(buffer, 1));
@@ -82,7 +110,7 @@ int				main(int ac, char **av)
 
 	if (ac > 1)
 	{
-		if (!(fd = open(av[1], O_RDONLY)))
+		if ((fd = open(av[1], O_RDONLY)) <= 0)
 			printf("Failed to open file: GTFO NOOB\n");
 		else
 		{
