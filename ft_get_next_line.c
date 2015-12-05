@@ -6,7 +6,7 @@
 /*   By: snicolet <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2015/12/04 10:11:09 by snicolet          #+#    #+#             */
-/*   Updated: 2015/12/05 18:45:22 by snicolet         ###   ########.fr       */
+/*   Updated: 2015/12/06 00:09:38 by snicolet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,44 +17,75 @@
 #include <stdlib.h>
 #define BUFF_SIZE 32
 
+static int		ft_add_pending(char *buffer, t_gnls *x)
+{
+	size_t		ppos;
+
+	ft_strappend(&(x->pending_buffer), buffer);
+	ppos = ft_strchrpos(x->pending_buffer, '\n');
+	return (ppos);
+}
+
+static int		ft_read_data(char *buffer, t_gnls *x)
+{
+	const size_t	bpos = ft_strchrpos(buffer, '\n');
+	size_t			ppos;
+	char			*tmp;
+
+	ppos = ft_add_pending(buffer, x);
+	if (ppos)
+	{
+		x->buffer = strndup(x->pending_buffer, ppos);
+		x->buffer[ppos] = '\0';
+		if (!(tmp = ft_strdup(x->pending_buffer + ppos)))
+			return (-1);
+		free(x->pending_buffer);
+		x->pending_buffer = tmp;
+		return (1);
+	}
+	else
+		ft_strappend(&(x->pending_buffer), buffer);
+	return (0);
+}
+
+static int		read_please(int fd, char *buffer)
+{
+	int		ret;
+
+	ret = read(fd, buffer, BUFF_SIZE);
+	buffer[ret] = '\0';
+	return (ret);
+}
+
 static int		ft_gnl_read(const int fd, t_gnls *x)
 {
-	char	buffer[BUFF_SIZE];
+	char	buffer[BUFF_SIZE + 1];
 	int		ret;
-	int		bpos;
 
-	while (((ret = read(fd, buffer, BUFF_SIZE - 1))) && (x->size += ret))
-	{
-		buffer[ret] = '\0';
-		bpos = ft_strchrpos((char*)buffer, '\n');
-		if (bpos)
-		{
-			buffer[bpos] = '\0';
-			x->size -= (ret - bpos);
-		}
-		if (x->next_buffer)
-			ft_strappend(&(x->buffer), x->next_buffer);
-		ft_strappend(&(x->buffer), buffer);
-		if (bpos)
-		{
-			x->next_buffer = ft_strdup(buffer + bpos + 1);
-			return (1);
-		}
-	}
-	return (0);
+	ret = read_please(fd, buffer);
+	while (!ft_read_data(buffer, x))
+		ret = read_please(fd, buffer);
+	if (ret < 0)
+		return (-1);
+	return (1);
 }
 
 int				ft_get_next_line(int const fd, char **line)
 {
-	static t_gnls	*x;
+	static t_gnls	*x = 0;
 
-	if (!(x = (t_gnls*)malloc(sizeof(t_gnls))))
-		return (-1);
-	ft_bzero(&x, sizeof(t_gnls));
-	if (!ft_gnl_read(fd, x))
-		return (0);
-	*line = x->buffer;
-	return (1);
+	*line = 0;
+	if (!x)
+	{
+		if (!(x = (t_gnls*)malloc(sizeof(t_gnls))))
+			return (-1);
+		x->buffer = 0;
+		x->pending_buffer = 0;
+		x->line_ok = 0;
+	}
+	if (ft_gnl_read(fd, x))
+		*line = x->buffer;
+	return (((*line) ? 1 : 0));
 }
 
 //DELETE EVRYTHING BELLOW THIS LINE (INCLUDED)
@@ -75,8 +106,10 @@ int				main(int ac, char **av)
 		else
 			while ((ret = ft_get_next_line(fd, &buffer)))
 				if (buffer)
+				{
 					printf("%s\n",buffer);
-		free(buffer);
+					ft_strdel(&buffer);
+				}
 		close(fd);
 	}
 	return (0);
