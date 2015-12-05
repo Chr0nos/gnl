@@ -6,7 +6,7 @@
 /*   By: snicolet <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2015/12/04 10:11:09 by snicolet          #+#    #+#             */
-/*   Updated: 2015/12/04 20:14:39 by snicolet         ###   ########.fr       */
+/*   Updated: 2015/12/05 13:21:08 by snicolet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,15 +41,22 @@ static char		*ft_strappend(char **s1, const char *s2)
 	size_t			size;
 	char			*d;
 	size_t			p;
+	size_t			i;
 
 	p = 0;
 	size = ((*s1) ? ft_strlen(*s1) : 0) + ft_strlen(s2);
-	if ((d = (char*)malloc(sizeof(char) * (size + 1))))
+	if (((d = (char*)malloc(sizeof(char) * (size + 1)))) && (!(i = 0)))
 	{
-		while (p <= size + 1)
-			d[p++] = (((*s1) && (**s1 != '\0')) ? *(*s1++) : *(s2++));
 		if (*s1)
+		{
+			while ((*s1)[i] != '\0')
+				d[p++] = (*s1)[i++];
 			free(*s1);
+		}
+		i = 0;
+		while (s2[i])
+			d[p++] = s2[i++];
+		d[p] = '\0';;
 		*s1 = d;
 	}
 	else
