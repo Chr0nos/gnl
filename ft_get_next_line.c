@@ -6,90 +6,51 @@
 /*   By: snicolet <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2015/12/04 10:11:09 by snicolet          #+#    #+#             */
-/*   Updated: 2015/12/05 13:21:08 by snicolet         ###   ########.fr       */
+/*   Updated: 2015/12/05 16:24:00 by snicolet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "ft_get_next_line.h"
+#include "libft.h"
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
 #define BUFF_SIZE 32
 
-static size_t	ft_strlen(const char *s)
+static int		ft_load_file(const int fd, t_gnls *x)
 {
-	size_t	len;
+	char	buffer[BUFF_SIZE];
+	int		ret;
+	int		bpos;
 
-	len = 0;
-	while (s[len])
-		len++;
-	return (len);
-}
-
-static size_t	ft_bpos(const char *s)
-{
-	size_t	bpos;
-
-	bpos = 0;
-	while (s[bpos])
-		if (s[bpos++] == '\n')
-			return (bpos - 1);
-	return (0);
-}
-
-static char		*ft_strappend(char **s1, const char *s2)
-{
-	size_t			size;
-	char			*d;
-	size_t			p;
-	size_t			i;
-
-	p = 0;
-	size = ((*s1) ? ft_strlen(*s1) : 0) + ft_strlen(s2);
-	if (((d = (char*)malloc(sizeof(char) * (size + 1)))) && (!(i = 0)))
+	while (((ret = read(fd, buffer, BUFF_SIZE -1))) && (x->size += ret))
 	{
-		if (*s1)
+		buffer[ret] = '\0';
+		bpos = ft_strchrpos((char*)buffer);
+		if (bpos)
 		{
-			while ((*s1)[i] != '\0')
-				d[p++] = (*s1)[i++];
-			free(*s1);
+			buffer[bpos] = '\0';
+			x->size -= (ret - bpos);
 		}
-		i = 0;
-		while (s2[i])
-			d[p++] = s2[i++];
-		d[p] = '\0';;
-		*s1 = d;
+		ft_strappend(&(x->buffer), buffer);
+		if (bpos)
+		{
+			ft_lstpush_back(&(x->lst), ft_lstnewstr(x->buffer));
+			(x->lines)++;
+			x->buffer[0] = '\0';
+		}
 	}
-	else
-		*s1 = 0;
-	return (d);
 }
 
 int				ft_get_next_line(int const fd, char **line)
 {
-	int		ret;
-	size_t	p;
-	char	buffer[BUFF_SIZE];
-	size_t	bpos;
-	size_t	total;
+	static t_gnls	x;
 
+	if (!(x = (t_gnls*)malloc(sizeof(t_gnls))))
+		return (-1);
+	ft_memset(x, 0, sizeof(t_gnls));
 	*line = 0;
-	p = 0;
-	total = 0;
-	while (((ret = read(fd, buffer, BUFF_SIZE -1)) >= 0) && (total += ret))
-	{
-		buffer[ret] = '\0';
-		bpos = ft_bpos((char*)buffer);
-		if (bpos)
-			buffer[bpos] = '\0';
-		ft_strappend(line, (char*)buffer);
-		if (!*line)
-			return (-1);
-		if (!bpos)
-			return (1);
-	}
-	if (*line)
-		return (1);
-	return ((ret < 0) ? -1 : 0);
+	return (0);
 }
 
 //DELETE EVRYTHING BELLOW THIS LINE (INCLUDED)
@@ -120,10 +81,8 @@ int				main(int ac, char **av)
 		if ((fd = open(av[1], O_RDONLY)) <= 0)
 			printf("Failed to open file: GTFO NOOB\n");
 		else
-		{
-			ret = ft_get_next_line(fd, &buffer);
-			printf("%s\n",buffer);
-		}
+			while ((ret = ft_get_next_line(fd, &buffer)))
+				printf("%s\n",buffer);
 		free(buffer);
 		close(fd);
 	}
