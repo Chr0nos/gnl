@@ -6,7 +6,7 @@
 /*   By: snicolet <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2015/12/04 10:11:09 by snicolet          #+#    #+#             */
-/*   Updated: 2015/12/06 01:17:54 by snicolet         ###   ########.fr       */
+/*   Updated: 2015/12/06 19:56:28 by snicolet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,25 +26,38 @@ static int		ft_add_pending(char *buffer, t_gnls *x)
 	return (ppos);
 }
 
-static int		ft_read_data(char *buffer, t_gnls *x)
+static int		ft_read_data(char *buffer, t_gnls *x, int ret)
 {
-	const size_t	bpos = ft_strchrpos(buffer, '\n');
-	size_t			ppos;
+	int				ppos;
 	char			*tmp;
 
 	ppos = ft_add_pending(buffer, x);
-	if (ppos)
+	if (!ret)
+		ppos = ft_strlen(x->pending_buffer);
+	//si un \n a ete trouve dans le pending buffer apres ajout du buffer de lecture
+	if (ppos >= 0)
 	{
-		x->buffer = strndup(x->pending_buffer, ppos);
+		//on lis la premiere partie avant le \n et on delimite la fin du buffer
+		x->buffer = strndup(x->pending_buffer, ppos + 1);
 		x->buffer[ppos] = '\0';
-		if (!(tmp = ft_strdup(x->pending_buffer + ppos)))
-			return (-1);
+		//on alloue l espace pour le nouveau buffer de pending et on copie
+		tmp = 0;
+		if (x->pending_buffer[ppos] != '\0')
+			if (!(tmp = ft_strdup(x->pending_buffer + ppos + 1)))
+				return (-1);
+		//on libere l ancien pending
 		free(x->pending_buffer);
+		//et on repointe le pending vers la nouvelle zone memoire
 		x->pending_buffer = tmp;
+		//et on retourne 1 pour dire qu une ligne est ok
 		return (1);
 	}
+	//sinon on ne fais que dalle et on return 0 (demande de nouvelle lecture)
 	else
-		ft_strappend(&(x->pending_buffer), buffer);
+	{
+		x->buffer = 0;
+		return (1);
+	}
 	return (0);
 }
 
@@ -62,20 +75,21 @@ static int		ft_gnl_read(const int fd, t_gnls *x)
 	char	buffer[BUFF_SIZE + 1];
 	int		ret;
 
+	x->buffer = 0;
 	while (1)
 	{
 		ret = read_please(fd, buffer);
-		if (ret == 0)
+		ret = ft_read_data(buffer, x, ret);
+		if (ret == 1)
+			return (ret);
+		else if (ret < 0)
 		{
-			x->buffer = x->pending_buffer;
-			return (1);
+			ft_putendl("gnl read internal error 1");
+			x->buffer = 0;
+			x->pending_buffer = 0;
+			return (ret);
 		}
-		if (ft_read_data(buffer, x))
-			return (1);
 	}
-	if (ret < 0)
-		return (-1);
-	return (0);
 }
 
 int				ft_get_next_line(int const fd, char **line)
@@ -89,7 +103,6 @@ int				ft_get_next_line(int const fd, char **line)
 			return (-1);
 		x->buffer = 0;
 		x->pending_buffer = 0;
-		x->line_ok = 0;
 	}
 	if (ft_gnl_read(fd, x))
 		*line = x->buffer;
@@ -105,8 +118,10 @@ int				main(int ac, char **av)
 	int		ret;
 	int		fd;
 	char	*buffer;
+	int		p;
 
 	buffer = 0;
+	p = 0;
 	if (ac > 1)
 	{
 		if ((fd = open(av[1], O_RDONLY)) <= 0)
@@ -115,7 +130,7 @@ int				main(int ac, char **av)
 			while ((ret = ft_get_next_line(fd, &buffer)))
 				if (buffer)
 				{
-					printf("%s\n",buffer);
+					printf("[%d] %s\n", p++, buffer);
 					ft_strdel(&buffer);
 				}
 		close(fd);
