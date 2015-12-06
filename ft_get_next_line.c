@@ -6,7 +6,7 @@
 /*   By: snicolet <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2015/12/04 10:11:09 by snicolet          #+#    #+#             */
-/*   Updated: 2015/12/06 00:09:38 by snicolet         ###   ########.fr       */
+/*   Updated: 2015/12/06 01:17:54 by snicolet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,12 +62,20 @@ static int		ft_gnl_read(const int fd, t_gnls *x)
 	char	buffer[BUFF_SIZE + 1];
 	int		ret;
 
-	ret = read_please(fd, buffer);
-	while (!ft_read_data(buffer, x))
+	while (1)
+	{
 		ret = read_please(fd, buffer);
+		if (ret == 0)
+		{
+			x->buffer = x->pending_buffer;
+			return (1);
+		}
+		if (ft_read_data(buffer, x))
+			return (1);
+	}
 	if (ret < 0)
 		return (-1);
-	return (1);
+	return (0);
 }
 
 int				ft_get_next_line(int const fd, char **line)
