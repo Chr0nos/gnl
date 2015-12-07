@@ -6,7 +6,7 @@
 /*   By: snicolet <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2015/12/04 10:11:09 by snicolet          #+#    #+#             */
-/*   Updated: 2015/12/07 12:37:26 by snicolet         ###   ########.fr       */
+/*   Updated: 2015/12/07 14:50:45 by snicolet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,9 @@
 #include <stdlib.h>
 #define BUFF_SIZE 32
 
+
+#include <stdio.h>
+
 static int		ft_add_pending(char *buffer, t_gnls *x)
 {
 	size_t		ppos;
@@ -26,7 +29,7 @@ static int		ft_add_pending(char *buffer, t_gnls *x)
 	return (ppos);
 }
 
-static int		ft_read_data(char *buffer, t_gnls *x, int ret)
+static int		ft_read_data(char *buffer, t_gnls *x, const int ret)
 {
 	const int		ppos = ft_add_pending(buffer, x);
 	const size_t	pl = (x->pending_buffer) ? ft_strlen(x->pending_buffer) : 0;
@@ -34,15 +37,17 @@ static int		ft_read_data(char *buffer, t_gnls *x, int ret)
 	char			*tmp;
 
 	//si un \n a ete trouve dans le pending buffer apres ajout du buffer de lecture
+	//ou que le buffer est vide (ret == 0)
 	if ((ppos >= 0) || (!ret))
 	{
 		//on lis la premiere partie avant le \n et on delimite la fin du buffer
-		x->buffer = strndup(x->pending_buffer, rpos + 1);
+		x->buffer = ft_strndup(x->pending_buffer, rpos + 1);
 		x->buffer[ppos] = '\0';
 		//on alloue l espace pour le nouveau buffer de pending et on copie
 		//evidement la copie du nouveau buffer se fera APRES le \n deja copie dans le buffer principal
 		tmp = 0;
-		if (rpos > 0)
+		printf("rpos: %d ppos: %d pl: %d\n", rpos, ppos, (int)pl);
+		if ((int)pl - 1 > ppos)
 			if (!(tmp = ft_strdup(x->pending_buffer + ppos + 1))) //ne pas virer le +1... terrible idea
 				return (-1);
 		//on libere l ancien pending
@@ -102,8 +107,6 @@ int				ft_get_next_line(int const fd, char **line)
 }
 
 //DELETE EVRYTHING BELLOW THIS LINE (INCLUDED)
-#include <stdlib.h>
-#include <stdio.h>
 
 int				main(int ac, char **av)
 {
