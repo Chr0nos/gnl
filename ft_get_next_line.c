@@ -6,7 +6,7 @@
 /*   By: snicolet <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2015/12/04 10:11:09 by snicolet          #+#    #+#             */
-/*   Updated: 2015/12/06 19:56:28 by snicolet         ###   ########.fr       */
+/*   Updated: 2015/12/07 12:37:26 by snicolet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,22 +28,22 @@ static int		ft_add_pending(char *buffer, t_gnls *x)
 
 static int		ft_read_data(char *buffer, t_gnls *x, int ret)
 {
-	int				ppos;
+	const int		ppos = ft_add_pending(buffer, x);
+	const size_t	pl = (x->pending_buffer) ? ft_strlen(x->pending_buffer) : 0;
+	const int		rpos = (ppos) ? ppos : pl;
 	char			*tmp;
 
-	ppos = ft_add_pending(buffer, x);
-	if (!ret)
-		ppos = ft_strlen(x->pending_buffer);
 	//si un \n a ete trouve dans le pending buffer apres ajout du buffer de lecture
-	if (ppos >= 0)
+	if ((ppos >= 0) || (!ret))
 	{
 		//on lis la premiere partie avant le \n et on delimite la fin du buffer
-		x->buffer = strndup(x->pending_buffer, ppos + 1);
+		x->buffer = strndup(x->pending_buffer, rpos + 1);
 		x->buffer[ppos] = '\0';
 		//on alloue l espace pour le nouveau buffer de pending et on copie
+		//evidement la copie du nouveau buffer se fera APRES le \n deja copie dans le buffer principal
 		tmp = 0;
-		if (x->pending_buffer[ppos] != '\0')
-			if (!(tmp = ft_strdup(x->pending_buffer + ppos + 1)))
+		if (rpos > 0)
+			if (!(tmp = ft_strdup(x->pending_buffer + ppos + 1))) //ne pas virer le +1... terrible idea
 				return (-1);
 		//on libere l ancien pending
 		free(x->pending_buffer);
@@ -56,18 +56,9 @@ static int		ft_read_data(char *buffer, t_gnls *x, int ret)
 	else
 	{
 		x->buffer = 0;
-		return (1);
+		return (0);
 	}
 	return (0);
-}
-
-static int		read_please(int fd, char *buffer)
-{
-	int		ret;
-
-	ret = read(fd, buffer, BUFF_SIZE);
-	buffer[ret] = '\0';
-	return (ret);
 }
 
 static int		ft_gnl_read(const int fd, t_gnls *x)
@@ -78,7 +69,8 @@ static int		ft_gnl_read(const int fd, t_gnls *x)
 	x->buffer = 0;
 	while (1)
 	{
-		ret = read_please(fd, buffer);
+		ret = read(fd, buffer, BUFF_SIZE);
+		buffer[ret] = '\0';
 		ret = ft_read_data(buffer, x, ret);
 		if (ret == 1)
 			return (ret);
@@ -127,7 +119,7 @@ int				main(int ac, char **av)
 		if ((fd = open(av[1], O_RDONLY)) <= 0)
 			printf("Failed to open file: GTFO NOOB\n");
 		else
-			while ((ret = ft_get_next_line(fd, &buffer)))
+			while ((ret = ft_get_next_line(fd, &buffer)) == 1)
 				if (buffer)
 				{
 					printf("[%d] %s\n", p++, buffer);
