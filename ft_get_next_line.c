@@ -6,7 +6,7 @@
 /*   By: snicolet <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2015/12/04 10:11:09 by snicolet          #+#    #+#             */
-/*   Updated: 2015/12/07 14:50:45 by snicolet         ###   ########.fr       */
+/*   Updated: 2015/12/08 18:08:49 by snicolet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,49 +20,64 @@
 
 #include <stdio.h>
 
-static int		ft_add_pending(char *buffer, t_gnls *x)
+static void		add_pending(char *buffer, t_gnls *x)
 {
-	size_t		ppos;
+	char	*tmp;
 
-	ft_strappend(&(x->pending_buffer), buffer);
-	ppos = ft_strchrpos(x->pending_buffer, '\n');
-	return (ppos);
+	if (x->pb)
+	{
+		tmp = x->pb;
+		x->pb = ft_strjoin(x->pb, buffer);
+		free(tmp);
+	}
+	else
+		x->pb = ft_strdup(buffer);
+}
+
+static void		rotate_pending(char **pending, size_t offset, int rest_len)
+{
+	char	*tmp;
+
+	tmp = NULL;
+	if ((rest_len > 0) && (!(tmp = ft_strdup(*pending + offset))))
+		return ;
+	if (*pending)
+		free(*pending);
+	*pending = tmp;
 }
 
 static int		ft_read_data(char *buffer, t_gnls *x, const int ret)
 {
-	const int		ppos = ft_add_pending(buffer, x);
-	const size_t	pl = (x->pending_buffer) ? ft_strlen(x->pending_buffer) : 0;
-	const int		rpos = (ppos) ? ppos : pl;
-	char			*tmp;
+	int			pending_lenght;
+	int			read_lenght;
+	int			rest_lenght;
+	char		*read_start;
 
-	//si un \n a ete trouve dans le pending buffer apres ajout du buffer de lecture
-	//ou que le buffer est vide (ret == 0)
-	if ((ppos >= 0) || (!ret))
+	add_pending(buffer, x);
+	if (x->pb == NULL)
+		return (-1);
+	pending_lenght = ft_strlen(x->pb);
+	read_start = ft_strchr(x->pb, '\n');
+	if (read_start)
+		read_lenght = read_start - x->pb;
+	else if ((ret <= 0) && (x->pb))
 	{
-		//on lis la premiere partie avant le \n et on delimite la fin du buffer
-		x->buffer = ft_strndup(x->pending_buffer, rpos + 1);
-		x->buffer[ppos] = '\0';
-		//on alloue l espace pour le nouveau buffer de pending et on copie
-		//evidement la copie du nouveau buffer se fera APRES le \n deja copie dans le buffer principal
-		tmp = 0;
-		printf("rpos: %d ppos: %d pl: %d\n", rpos, ppos, (int)pl);
-		if ((int)pl - 1 > ppos)
-			if (!(tmp = ft_strdup(x->pending_buffer + ppos + 1))) //ne pas virer le +1... terrible idea
-				return (-1);
-		//on libere l ancien pending
-		free(x->pending_buffer);
-		//et on repointe le pending vers la nouvelle zone memoire
-		x->pending_buffer = tmp;
-		//et on retourne 1 pour dire qu une ligne est ok
+		//ici lire le prochain \n dans le peding
+		read_lenght = pending_lenght;
+	}
+	else
+		read_lenght = 0;
+	rest_lenght = pending_lenght - read_lenght;
+	printf("rest lenght: %d --- read: %d --- pending len: %d\n", rest_lenght, read_lenght, pending_lenght);
+	if (read_lenght > 0)
+	{
+		x->buffer = ft_strndup(x->pb, read_lenght);
+		x->buffer[read_lenght] = '\0';
+		rotate_pending(&x->pb, read_lenght + 1, rest_lenght);
 		return (1);
 	}
-	//sinon on ne fais que dalle et on return 0 (demande de nouvelle lecture)
-	else
-	{
-		x->buffer = 0;
-		return (0);
-	}
+	else if (ret <= 0)
+		return (1);
 	return (0);
 }
 
@@ -70,40 +85,43 @@ static int		ft_gnl_read(const int fd, t_gnls *x)
 {
 	char	buffer[BUFF_SIZE + 1];
 	int		ret;
+	int		ret_b;
 
 	x->buffer = 0;
+	ret = 1;
 	while (1)
 	{
-		ret = read(fd, buffer, BUFF_SIZE);
-		buffer[ret] = '\0';
-		ret = ft_read_data(buffer, x, ret);
-		if (ret == 1)
+		if (ret > 0)
+		{
+			ret = read(fd, buffer, BUFF_SIZE);
+			if (ret < 0)
+				return (ret);
+			buffer[ret] = '\0';
+		}
+		ret_b = ft_read_data(buffer, x, ret);
+		if ((ret_b == 0) || (ret_b == 1))
 			return (ret);
 		else if (ret < 0)
 		{
 			ft_putendl("gnl read internal error 1");
 			x->buffer = 0;
-			x->pending_buffer = 0;
+			x->pb = 0;
 			return (ret);
 		}
 	}
 }
 
+//TODO: RENOMER LA FONCTiON SANS LE FT_
 int				ft_get_next_line(int const fd, char **line)
 {
-	static t_gnls	*x = 0;
+	static t_gnls	x;
+	int				ret;
 
 	*line = 0;
-	if (!x)
-	{
-		if (!(x = (t_gnls*)malloc(sizeof(t_gnls))))
-			return (-1);
-		x->buffer = 0;
-		x->pending_buffer = 0;
-	}
-	if (ft_gnl_read(fd, x))
-		*line = x->buffer;
-	return (((*line) ? 1 : 0));
+	ret = ft_gnl_read(fd, &x);
+	if (ret >= 0)
+		*line = x.buffer;
+	return (ret);
 }
 
 //DELETE EVRYTHING BELLOW THIS LINE (INCLUDED)
@@ -122,13 +140,22 @@ int				main(int ac, char **av)
 		if ((fd = open(av[1], O_RDONLY)) <= 0)
 			printf("Failed to open file: GTFO NOOB\n");
 		else
-			while ((ret = ft_get_next_line(fd, &buffer)) == 1)
-				if (buffer)
+		{
+			while (1)
+			{
+				ret = ft_get_next_line(fd, &buffer);
+				if (ret >= 0)
 				{
 					printf("[%d] %s\n", p++, buffer);
 					ft_strdel(&buffer);
+					if (ret == 0)
+						return (0);
 				}
-		close(fd);
+				else
+					return (0);
+			}
+			close(fd);
+		}
 	}
 	return (0);
 }
