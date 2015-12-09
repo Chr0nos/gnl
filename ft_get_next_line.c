@@ -6,7 +6,7 @@
 /*   By: snicolet <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2015/12/04 10:11:09 by snicolet          #+#    #+#             */
-/*   Updated: 2015/12/08 20:31:36 by snicolet         ###   ########.fr       */
+/*   Updated: 2015/12/09 12:49:56 by snicolet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,17 +15,11 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
-#define BUFF_SIZE 32
-
-
-#include <stdio.h>
 
 static void		add_pending(char *buffer, t_gnls *x)
 {
 	char	*tmp;
 
-	if (*buffer == '\0')
-		return ;
 	if (x->pb)
 	{
 		tmp = x->pb;
@@ -41,7 +35,12 @@ static void		rotate_pending(char **pending, size_t offset, int rest_len)
 	char	*tmp;
 
 	tmp = NULL;
-	if ((rest_len > 0) && (!(tmp = ft_strdup(*pending + offset))))
+	if (rest_len <= 0)
+	{
+		free(*pending);
+		*pending = NULL;
+	}
+	else if (!(tmp = ft_strdup(*pending + offset)))
 		return ;
 	if (*pending)
 		free(*pending);
@@ -56,19 +55,16 @@ static int		ft_read_data(char *buffer, t_gnls *x)
 	add_pending(buffer, x);
 	if (x->pb == NULL)
 		return (-1);
-	read_lenght = ft_strsublen(x->pb, '\n');
-	rest_lenght = ft_strlen(x->pb) - read_lenght;
-
-	printf("rest lenght: %d --- read: %d\n", rest_lenght, read_lenght);
-	printf("pending: %s\n", x->pb);
-	if (read_lenght > 0)
+	read_lenght = ft_strchrpos(x->pb, '\n');
+	rest_lenght = 0;
+	if ((read_lenght > 0) || ((read_lenght == 0) && (x->pb[0] == '\n')))
 	{
+		rest_lenght = ft_strlen(x->pb) - read_lenght;
 		x->buffer = ft_strndup(x->pb, read_lenght);
 		x->buffer[read_lenght] = '\0';
 		rotate_pending(&x->pb, read_lenght + 1, rest_lenght);
 		return (1);
 	}
-	ft_putendl("je suis perduuuu");
 	return (0);
 }
 
@@ -80,30 +76,28 @@ static int		ft_gnl_read(const int fd, t_gnls *x)
 
 	x->buffer = 0;
 	ret = 1;
-	while (1)
+
+	while ((ret = read(fd, buffer, BUFF_SIZE)))
 	{
-		if (ret > 0)
-		{
-			ret = read(fd, buffer, BUFF_SIZE);
-			if (ret < 0)
-				return (ret);
-			buffer[ret] = '\0';
-		}
+		if (ret < 0)
+			return (ret);
+		buffer[ret] = '\0';
 		ret_b = ft_read_data(buffer, x);
-		if ((ret_b == 0) || (ret_b == 1))
-			return (ret);
-		else if (ret < 0)
-		{
-			ft_putendl("gnl read internal error 1");
-			x->buffer = 0;
-			x->pb = 0;
-			return (ret);
-		}
+		if (ret_b == 1)
+			return (1);
 	}
+	buffer[0] = '\0';
+	while ((ret_b = ft_read_data(buffer, x)))
+	{
+		if (ret_b < 0)
+			return (ret_b);
+		if (ret_b == 1)
+			return (1);
+	}
+	return (0);
 }
 
-//TODO: RENOMER LA FONCTiON SANS LE FT_
-int				ft_get_next_line(int const fd, char **line)
+int				get_next_line(int const fd, char **line)
 {
 	static t_gnls	x;
 	int				ret;
@@ -114,8 +108,9 @@ int				ft_get_next_line(int const fd, char **line)
 		*line = x.buffer;
 	return (ret);
 }
-
 //DELETE EVRYTHING BELLOW THIS LINE (INCLUDED)
+
+#include <stdio.h>
 
 int				main(int ac, char **av)
 {
@@ -132,7 +127,7 @@ int				main(int ac, char **av)
 			printf("Failed to open file: GTFO NOOB\n");
 		else
 		{
-			while ((ret = ft_get_next_line(fd, &buffer)))
+			while ((ret = get_next_line(fd, &buffer)))
 			{
 				printf("[%d] %s\n", p++, buffer);
 				ft_strdel(&buffer);
