@@ -6,7 +6,7 @@
 /*   By: snicolet <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2015/12/05 14:15:48 by snicolet          #+#    #+#             */
-/*   Updated: 2015/12/09 16:42:12 by snicolet         ###   ########.fr       */
+/*   Updated: 2015/12/11 14:09:35 by snicolet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@ typedef struct	s_gnlstatic_of_doom
 {
 	char		*buffer;
 	char		*pb;
+	int			fd;
 }				t_gnls;
 
 int				get_next_line(int const fd, char **line);

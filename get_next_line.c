@@ -6,7 +6,7 @@
 /*   By: snicolet <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2015/12/04 10:11:09 by snicolet          #+#    #+#             */
-/*   Updated: 2015/12/09 19:52:03 by snicolet         ###   ########.fr       */
+/*   Updated: 2015/12/11 18:02:28 by snicolet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -98,12 +98,27 @@ static int		ft_gnl_read(const int fd, t_gnls *x)
 
 int				get_next_line(int const fd, char **line)
 {
-	static t_gnls	x;
+	t_gnls			x;
 	int				ret;
+	static t_list	*lst_origin;
+	t_list			*lst;
 
+	lst = lst_origin;
+	while ((lst) && (((t_gnls *)(lst->content))->fd != fd))
+		lst = lst->next;
+	if (!lst)
+	{
+		if (!(lst = ft_lstnew((void *)&x, sizeof(x))))
+			return (-1);
+		((t_gnls*)(lst->content))->fd = fd;
+		ft_lstadd(&lst_origin, lst);
+		lst = lst_origin;
+	}
 	*line = 0;
-	ret = ft_gnl_read(fd, &x);
+	ret = ft_gnl_read(fd, (t_gnls *)(lst->content));
 	if (ret >= 0)
-		*line = x.buffer;
+		*line = ((t_gnls*)(lst->content))->buffer;
+	if (ret == 0)
+		ft_lstremove(&lst, ft_lstparent(lst_origin, lst), &free);
 	return (ret);
 }
