@@ -6,7 +6,7 @@
 /*   By: snicolet <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2015/12/04 10:11:09 by snicolet          #+#    #+#             */
-/*   Updated: 2015/12/11 19:30:05 by snicolet         ###   ########.fr       */
+/*   Updated: 2015/12/12 15:53:57 by snicolet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,11 +20,13 @@ static void		add_pending(char *buffer, t_gnls *x)
 {
 	char	*tmp;
 
-	if (x->pb)
+	if (*buffer == '\0')
+		return ;
+	else if (x->pb)
 	{
 		tmp = x->pb;
 		x->pb = ft_strjoin(x->pb, buffer);
-		free(tmp);
+		ft_strdel(&tmp);
 	}
 	else
 		x->pb = ft_strdup(buffer);
@@ -36,10 +38,7 @@ static void		rotate_pending(char **pending, size_t offset, int rest_len)
 
 	tmp = NULL;
 	if (rest_len <= 0)
-	{
-		free(*pending);
-		*pending = NULL;
-	}
+		ft_strdel(pending);
 	else if (!(tmp = ft_strdup(*pending + offset)))
 		return ;
 	if (*pending)
@@ -55,15 +54,15 @@ static int		ft_read_data(char *buffer, t_gnls *x)
 	add_pending(buffer, x);
 	if (x->pb == NULL)
 		return (-1);
+	ft_putendl(x->pb);
 	read_lenght = ft_strchrpos(x->pb, '\n');
-	rest_lenght = 0;
 	if (read_lenght >= 0)
 	{
 		rest_lenght = ft_strlen(x->pb) - read_lenght;
 		x->buffer = ft_strndup(x->pb, read_lenght);
 		x->buffer[read_lenght] = '\0';
 		rotate_pending(&x->pb, read_lenght + 1, rest_lenght);
-		return (1);
+		return ((rest_lenght <= 0) ? 0 : 1);
 	}
 	return (0);
 }
@@ -88,9 +87,9 @@ static int		ft_gnl_read(const int fd, t_gnls *x)
 	buffer[0] = '\0';
 	while ((ret_b = ft_read_data(buffer, x)))
 	{
-		if (ret_b < 0)
+		if (ret_b == 0)
 			return (ret_b);
-		if (ret_b == 1)
+		else if (ret_b == 1)
 			return (1);
 	}
 	return (0);
