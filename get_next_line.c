@@ -6,7 +6,7 @@
 /*   By: snicolet <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2015/12/04 10:11:09 by snicolet          #+#    #+#             */
-/*   Updated: 2015/12/11 18:02:28 by snicolet         ###   ########.fr       */
+/*   Updated: 2015/12/11 19:30:05 by snicolet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -117,8 +117,8 @@ int				get_next_line(int const fd, char **line)
 	*line = 0;
 	ret = ft_gnl_read(fd, (t_gnls *)(lst->content));
 	if (ret >= 0)
-		*line = ((t_gnls*)(lst->content))->buffer;
+		*line = ((t_gnls *)(lst->content))->buffer;
 	if (ret == 0)
-		ft_lstremove(&lst, ft_lstparent(lst_origin, lst), &free);
+		ft_lstremove(&lst, &lst_origin, &free);
 	return (ret);
 }
