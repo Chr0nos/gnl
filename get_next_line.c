@@ -6,7 +6,7 @@
 /*   By: snicolet <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2015/12/04 10:11:09 by snicolet          #+#    #+#             */
-/*   Updated: 2015/12/12 15:53:57 by snicolet         ###   ########.fr       */
+/*   Updated: 2015/12/13 12:03:06 by snicolet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,7 +54,6 @@ static int		ft_read_data(char *buffer, t_gnls *x)
 	add_pending(buffer, x);
 	if (x->pb == NULL)
 		return (-1);
-	ft_putendl(x->pb);
 	read_lenght = ft_strchrpos(x->pb, '\n');
 	if (read_lenght >= 0)
 	{
