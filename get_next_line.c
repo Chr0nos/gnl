@@ -6,7 +6,7 @@
 /*   By: snicolet <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2015/12/04 10:11:09 by snicolet          #+#    #+#             */
-/*   Updated: 2015/12/15 22:50:47 by snicolet         ###   ########.fr       */
+/*   Updated: 2015/12/15 23:54:01 by snicolet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -106,7 +106,7 @@ int				get_next_line(int const fd, char **line)
 	lst = lst_origin;
 	while ((lst) && (((t_gnls *)(lst->content))->fd != fd))
 		lst = lst->next;
-	if (!lst)
+	if ((!lst) && (x.pb = NULL))
 	{
 		if (!(lst = ft_lstnew((void *)&x, sizeof(x))))
 			return (-1);
