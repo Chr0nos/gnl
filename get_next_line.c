@@ -6,7 +6,7 @@
 /*   By: snicolet <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2015/12/04 10:11:09 by snicolet          #+#    #+#             */
-/*   Updated: 2015/12/13 12:03:06 by snicolet         ###   ########.fr       */
+/*   Updated: 2015/12/15 22:50:47 by snicolet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,12 +32,12 @@ static void		add_pending(char *buffer, t_gnls *x)
 		x->pb = ft_strdup(buffer);
 }
 
-static void		rotate_pending(char **pending, size_t offset, int rest_len)
+static void		rotate_pending(char **pending, size_t offset, size_t rest_len)
 {
 	char	*tmp;
 
 	tmp = NULL;
-	if (rest_len <= 0)
+	if (rest_len == 0)
 		ft_strdel(pending);
 	else if (!(tmp = ft_strdup(*pending + offset)))
 		return ;
@@ -49,7 +49,7 @@ static void		rotate_pending(char **pending, size_t offset, int rest_len)
 static int		ft_read_data(char *buffer, t_gnls *x)
 {
 	int			read_lenght;
-	int			rest_lenght;
+	size_t		rest_lenght;
 
 	add_pending(buffer, x);
 	if (x->pb == NULL)
@@ -57,10 +57,10 @@ static int		ft_read_data(char *buffer, t_gnls *x)
 	read_lenght = ft_strchrpos(x->pb, '\n');
 	if (read_lenght >= 0)
 	{
-		rest_lenght = ft_strlen(x->pb) - read_lenght;
-		x->buffer = ft_strndup(x->pb, read_lenght);
+		rest_lenght = ft_strlen(x->pb) - (size_t)read_lenght;
+		x->buffer = ft_strndup(x->pb, (size_t)read_lenght);
 		x->buffer[read_lenght] = '\0';
-		rotate_pending(&x->pb, read_lenght + 1, rest_lenght);
+		rotate_pending(&x->pb, (size_t)read_lenght + 1, rest_lenght);
 		return ((rest_lenght <= 0) ? 0 : 1);
 	}
 	return (0);
@@ -74,7 +74,7 @@ static int		ft_gnl_read(const int fd, t_gnls *x)
 
 	x->buffer = 0;
 	ret = 1;
-	while ((ret = read(fd, buffer, BUFF_SIZE)))
+	while ((ret = (int)read(fd, buffer, BUFF_SIZE)))
 	{
 		if (ret < 0)
 			return (ret);
@@ -101,6 +101,8 @@ int				get_next_line(int const fd, char **line)
 	static t_list	*lst_origin;
 	t_list			*lst;
 
+	if ((fd < 0) || (!line))
+		return (-1);
 	lst = lst_origin;
 	while ((lst) && (((t_gnls *)(lst->content))->fd != fd))
 		lst = lst->next;
