@@ -6,7 +6,7 @@
 /*   By: snicolet <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2015/12/04 10:11:09 by snicolet          #+#    #+#             */
-/*   Updated: 2015/12/16 12:59:56 by snicolet         ###   ########.fr       */
+/*   Updated: 2015/12/16 13:20:16 by snicolet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,7 +74,7 @@ static int		ft_gnl_read(const int fd, t_gnls *x)
 	int		ret;
 	int		ret_b;
 
-	x->buffer = 0;
+	x->buffer = NULL;
 	ret = 1;
 	while ((ret = (int)read(fd, buffer, BUFF_SIZE)))
 	{
@@ -108,7 +108,7 @@ int				get_next_line(int const fd, char **line)
 	lst = lst_origin;
 	while ((lst) && (((t_gnls *)(lst->content))->fd != fd))
 		lst = lst->next;
-	if ((!lst) && (x.pb = NULL) && (x.buffer = NULL))
+	if ((!lst) && (!(x.pb = NULL)))
 	{
 		if (!(lst = ft_lstnew((void *)&x, sizeof(x))))
 			return (-1);
@@ -120,7 +120,7 @@ int				get_next_line(int const fd, char **line)
 	ret = ft_gnl_read(fd, (t_gnls *)(lst->content));
 	if (ret >= 0)
 		*line = ((t_gnls *)(lst->content))->buffer;
-	if (ret == 0)
+	if ((ret == 0) && (lst != NULL))
 		ft_lstremove(&lst, &lst_origin, &free);
 	return (ret);
 }
