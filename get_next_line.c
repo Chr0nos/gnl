@@ -6,7 +6,7 @@
 /*   By: snicolet <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2015/12/04 10:11:09 by snicolet          #+#    #+#             */
-/*   Updated: 2015/12/15 23:54:01 by snicolet         ###   ########.fr       */
+/*   Updated: 2015/12/16 12:59:56 by snicolet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,7 @@ static void		add_pending(char *buffer, t_gnls *x)
 
 	if (*buffer == '\0')
 		return ;
-	else if (x->pb)
+	else if (x->pb != NULL)
 	{
 		tmp = x->pb;
 		x->pb = ft_strjoin(x->pb, buffer);
@@ -39,10 +39,12 @@ static void		rotate_pending(char **pending, size_t offset, size_t rest_len)
 	tmp = NULL;
 	if (rest_len == 0)
 		ft_strdel(pending);
-	else if (!(tmp = ft_strdup(*pending + offset)))
-		return ;
-	if (*pending)
-		free(*pending);
+	else
+	{	if (!(tmp = ft_strdup(*pending + offset)))
+			return ;
+		if (*pending != NULL)
+			free(*pending);
+	}
 	*pending = tmp;
 }
 
@@ -106,7 +108,7 @@ int				get_next_line(int const fd, char **line)
 	lst = lst_origin;
 	while ((lst) && (((t_gnls *)(lst->content))->fd != fd))
 		lst = lst->next;
-	if ((!lst) && (x.pb = NULL))
+	if ((!lst) && (x.pb = NULL) && (x.buffer = NULL))
 	{
 		if (!(lst = ft_lstnew((void *)&x, sizeof(x))))
 			return (-1);
