@@ -6,7 +6,7 @@
 /*   By: snicolet <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2015/12/04 10:11:09 by snicolet          #+#    #+#             */
-/*   Updated: 2015/12/16 13:20:16 by snicolet         ###   ########.fr       */
+/*   Updated: 2015/12/19 17:04:50 by snicolet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,7 +75,6 @@ static int		ft_gnl_read(const int fd, t_gnls *x)
 	int		ret_b;
 
 	x->buffer = NULL;
-	ret = 1;
 	while ((ret = (int)read(fd, buffer, BUFF_SIZE)))
 	{
 		if (ret < 0)
