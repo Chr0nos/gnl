@@ -6,7 +6,7 @@
 /*   By: snicolet <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2015/12/04 10:11:09 by snicolet          #+#    #+#             */
-/*   Updated: 2015/12/22 11:49:30 by snicolet         ###   ########.fr       */
+/*   Updated: 2015/12/22 13:28:22 by snicolet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,7 +48,7 @@ static void		rotate_pending(char **pending, size_t offset, size_t rest_len)
 	*pending = tmp;
 }
 
-static int		ft_read_data(char *buffer, t_gnls *x)
+static int		ft_read_data(char *buffer, t_gnls *x, int buffer_len)
 {
 	int			read_lenght;
 	size_t		rest_lenght;
@@ -59,6 +59,8 @@ static int		ft_read_data(char *buffer, t_gnls *x)
 	read_lenght = ft_strchrpos(x->pb, '\n');
 	if (read_lenght < 0)
 		read_lenght = ft_strlen(x->pb);
+	if ((buffer_len == BUFF_SIZE) && (buffer[buffer_len - 1] != '\n'))
+		return (0);
 	if (read_lenght >= 0)
 	{
 		rest_lenght = ft_strlen(x->pb) - (size_t)read_lenght;
@@ -84,12 +86,12 @@ static int		ft_gnl_read(const int fd, t_gnls *x)
 		if (ret < 0)
 			return (ret);
 		buffer[ret] = '\0';
-		ret_b = ft_read_data(buffer, x);
+		ret_b = ft_read_data(buffer, x, ret);
 		if (ret_b == 1)
 			return (1);
 	}
 	buffer[0] = '\0';
-	while ((ret_b = ft_read_data(buffer, x)))
+	while ((ret_b = ft_read_data(buffer, x, 0)))
 	{
 		if (ret_b == 0)
 			return (ret_b);
