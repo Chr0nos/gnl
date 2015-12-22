@@ -6,7 +6,7 @@
 /*   By: snicolet <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2015/12/04 10:11:09 by snicolet          #+#    #+#             */
-/*   Updated: 2015/12/22 13:28:22 by snicolet         ###   ########.fr       */
+/*   Updated: 2015/12/22 13:29:56 by snicolet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,8 @@ static void		rotate_pending(char **pending, size_t offset, size_t rest_len)
 	if (rest_len == 0)
 		ft_strdel(pending);
 	else
-	{	if (!(tmp = ft_strdup(*pending + offset)))
+	{
+		if (!(tmp = ft_strdup(*pending + offset)))
 			return ;
 		if (*pending != NULL)
 			free(*pending);
