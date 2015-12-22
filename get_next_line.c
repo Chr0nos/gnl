@@ -6,7 +6,7 @@
 /*   By: snicolet <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2015/12/04 10:11:09 by snicolet          #+#    #+#             */
-/*   Updated: 2015/12/19 17:04:50 by snicolet         ###   ########.fr       */
+/*   Updated: 2015/12/22 11:49:30 by snicolet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,14 +55,18 @@ static int		ft_read_data(char *buffer, t_gnls *x)
 
 	add_pending(buffer, x);
 	if (x->pb == NULL)
-		return (-1);
+		return (0);
 	read_lenght = ft_strchrpos(x->pb, '\n');
+	if (read_lenght < 0)
+		read_lenght = ft_strlen(x->pb);
 	if (read_lenght >= 0)
 	{
 		rest_lenght = ft_strlen(x->pb) - (size_t)read_lenght;
 		x->buffer = ft_strndup(x->pb, (size_t)read_lenght);
 		x->buffer[read_lenght] = '\0';
 		rotate_pending(&x->pb, (size_t)read_lenght + 1, rest_lenght);
+		if (read_lenght > 0)
+			return (1);
 		return ((rest_lenght <= 0) ? 0 : 1);
 	}
 	return (0);
