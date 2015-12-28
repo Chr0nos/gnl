@@ -6,7 +6,7 @@
 /*   By: snicolet <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2015/12/04 10:11:09 by snicolet          #+#    #+#             */
-/*   Updated: 2015/12/22 13:29:56 by snicolet         ###   ########.fr       */
+/*   Updated: 2015/12/28 16:16:04 by snicolet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,7 +59,7 @@ static int		ft_read_data(char *buffer, t_gnls *x, int buffer_len)
 		return (0);
 	read_lenght = ft_strchrpos(x->pb, '\n');
 	if (read_lenght < 0)
-		read_lenght = ft_strlen(x->pb);
+		read_lenght = (int)ft_strlen(x->pb);
 	if ((buffer_len == BUFF_SIZE) && (buffer[buffer_len - 1] != '\n'))
 		return (0);
 	if (read_lenght >= 0)
