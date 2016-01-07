@@ -10,8 +10,8 @@
 #                                                                              #
 # **************************************************************************** #
 
-EXTRA_FLAGS=-Weverything -g3 -pipe
-FLAGS=-Wall -Werror -Wextra -Wno-unused-result
+EXTRA_FLAGS=
+FLAGS=-Wall -Werror -Wextra
 COMPILER=clang
 GCC=$(COMPILER) $(FLAGS) -I. $(EXTRA_FLAGS)
 RANLIB=ranlib
